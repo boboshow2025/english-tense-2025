@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瑪莉吃漢堡學時態 - Mary's Burger Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
+        body { font-family: 'Nunito', 'Noto Sans TC', sans-serif; }
+
+        /* Stage Background */
+        .stage-bg {
+            background-color: #fef3c7; /* Amber-100 */
+            background-image: radial-gradient(#fcd34d 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Timeline Track */
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 4px;
+            background: #9ca3af;
+            border-radius: 4px;
+        }
+
+        /* NOW Marker */
+        .marker-now {
+            position: absolute;
+            left: 50%;
+            top: 20%;
+            bottom: 20%;
+            width: 0;
+            border-left: 2px dashed #ef4444; /* Red dashed line */
+            z-index: 0;
+        }
+        .marker-now::before {
+            content: 'NOW (現在)';
+            position: absolute;
+            top: -25px;
+            left: -35px;
+            background: #ef4444;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Mary Character */
+        .mary-container {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .mary-avatar {
+            font-size: 4rem;
+            line-height: 1;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+            transition: transform 0.3s;
+        }
+        .mary-action {
+            font-size: 2rem;
+            position: absolute;
+            top: 10px;
+            right: -10px;
+            animation: bounce 1s infinite;
+        }
+        
+        /* Bubble / Status */
+        .status-bubble {
+            background: white;
+            border: 2px solid #3b82f6;
+            color: #1e3a8a;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            position: absolute;
+            top: -50px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.5s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #3b82f6;
+        }
+
+        /* Animation Keyframes */
+        @keyframes chew {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+        .chewing .mary-avatar { animation: chew 0.3s infinite; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Result Arrow (For Perfect Tense) */
+        .result-arrow {
+            position: absolute;
+            top: 60%; 
+            height: 2px;
+            background: #ef4444;
+            transform-origin: left center;
+            opacity: 0;
+            transition: width 1s ease-out, opacity 0.5s;
+        }
+        .result-arrow::after {
+            content: '➤';
+            position: absolute;
+            right: -10px;
+            top: -8px;
+            color: #ef4444;
+            font-size: 16px;
+        }
+
+    </style>
+</head>
+<body class="bg-indigo-50 min-h-screen flex flex-col items-center p-4">
+
+    <header class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-indigo-800">🍔 瑪莉的漢堡時態日記</h1>
+        <p class="text-gray-600 text-sm">Mary's Burger Time</p>
+    </header>
+
+    <div class="w-full max-w-4xl h-80 stage-bg rounded-3xl shadow-xl relative overflow-hidden mb-6 border-4 border-white">
+        
+        <div class="marker-now"></div>
+        <div class="timeline-line"></div>
+        <div class="absolute left-10 top-1/2 mt-4 text-xs font-bold text-gray-400">PAST (過去)</div>
+        <div class="absolute right-10 top-1/2 mt-4 text-xs font-bold text-gray-400">FUTURE (未來)</div>
+
+        <div id="arrow" class="result-arrow" style="left: 20%; width: 0px;"></div>
+
+        <div id="mary" class="mary-container" style="left: 50%;">
+            <div id="bubble" class="status-bubble">Hi! I'm Mary.</div>
+            <div id="avatar" class="mary-avatar">👧</div>
+            <div id="food" class="mary-action hidden">🍔</div>
+        </div>
+
+    </div>
+
+    <div class="w-full max-w-4xl bg-white p-6 rounded-2xl shadow-lg mb-6 text-center">
+        <h2 id="sent-en" class="text-2xl font-bold text-indigo-700 mb-2">請選擇一個時態</h2>
+        <p id="sent-zh" class="text-gray-500 mb-4">觀察瑪莉的動作與盤子的狀態</p>
+        <div id="grammar-tip" class="inline-block bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg text-sm font-bold border border-yellow-300">
+            👈 點擊下方按鈕開始上課
+        </div>
+    </div>
+
+    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-orange-400">
+            <h3 class="font-bold text-gray-700 mb-2 text-center">過去 (Past)</h3>
+            <button onclick="setScenario('past_simple')" class="w-full mb-2 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded transition text-sm font-bold">Past Simple (吃了)</button>
+            <button onclick="setScenario('past_cont')" class="w-full mb-2 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded transition text-sm font-bold">Past Continuous (正在吃)</button>
+            <button onclick="setScenario('past_perf')" class="w-full mb-2 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded transition text-sm font-bold">Past Perfect (早就吃過了)</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-400">
+            <h3 class="font-bold text-gray-700 mb-2 text-center">現在 (Present)</h3>
+            <button onclick="setScenario('present_simple')" class="w-full mb-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded transition text-sm font-bold">Present Simple (平常吃)</button>
+            <button onclick="setScenario('present_cont')" class="w-full mb-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded transition text-sm font-bold">Present Continuous (正在吃)</button>
+            <button onclick="setScenario('present_perf')" class="w-full mb-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded transition text-sm font-bold">Present Perfect (吃飽了)</button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-green-400">
+            <h3 class="font-bold text-gray-700 mb-2 text-center">未來 (Future)</h3>
+            <button onclick="setScenario('future_simple')" class="w-full mb-2 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded transition text-sm font-bold">Future Simple (將會吃)</button>
+            <button onclick="setScenario('future_cont')" class="w-full mb-2 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded transition text-sm font-bold">Future Continuous (將正在吃)</button>
+        </div>
+
+    </div>
+
+    <script>
+        const mary = document.getElementById('mary');
+        const avatar = document.getElementById('avatar');
+        const food = document.getElementById('food');
+        const bubble = document.getElementById('bubble');
+        const arrow = document.getElementById('arrow');
+        
+        const txtEn = document.getElementById('sent-en');
+        const txtZh = document.getElementById('sent-zh');
+        const txtTip = document.getElementById('grammar-tip');
+
+        // Scenarios Data
+        const scenarios = {
+            // --- PAST ---
+            'past_simple': {
+                en: "Mary ate a burger yesterday.",
+                zh: "瑪莉昨天吃了漢堡。(單一事件，吃完就沒了)",
+                tip: "動詞用過去式 (ate)。重點是「何時」發生的。",
+                pos: "25%", // Past
+                avatar: "👧",
+                food: "🍔",
+                action: "eat_once",
+                bubble: "Yum! (Yesterday)"
+            },
+            'past_cont': {
+                en: "Mary was eating a burger at 8 PM.",
+                zh: "昨晚八點，瑪莉「正在」吃漢堡。(動作進行中)",
+                tip: "Was + V-ing。強調當時動作沒有停下來。",
+                pos: "20%",
+                avatar: "👧",
+                food: "🍔",
+                action: "eating_loop",
+                bubble: "Munch munch..."
+            },
+            'past_perf': {
+                en: "Mary had eaten before John arrived.",
+                zh: "在約翰來之前，瑪莉「已經」吃過漢堡了。",
+                tip: "Had + V-pp。兩個過去動作，比較早發生的那個用完成式。",
+                pos: "15%", // Far Past
+                avatar: "😋", // Face showing satisfied
+                food: "🍽️", // Empty plate
+                action: "result_past", // Show link to John's arrival time
+                bubble: "I'm full already!"
+            },
+
+            // --- PRESENT ---
+            'present_simple': {
+                en: "Mary eats burgers every Friday.",
+                zh: "瑪莉每週五都吃漢堡。(習慣、常態)",
+                tip: "現在簡單式表示「習慣」，不是現在正在吃。",
+                pos: "50%",
+                avatar: "👧",
+                food: "📅", // Calendar or Schedule concept
+                action: "idle",
+                bubble: "It's my habit."
+            },
+            'present_cont': {
+                en: "Mary is eating a burger right now.",
+                zh: "瑪莉現在「正在」吃漢堡。",
+                tip: "is + V-ing。動作正在進行，嘴巴正在動。",
+                pos: "50%",
+                avatar: "👧",
+                food: "🍔",
+                action: "eating_loop",
+                bubble: "Delicious!"
+            },
+            'present_perf': {
+                en: "Mary has eaten the burger.",
+                zh: "瑪莉「已經」吃完漢堡了。(重點：現在盤子是空的)",
+                tip: "Have/Has + V-pp。不重要什麼時候吃的，重要的是「現在吃飽了」。",
+                pos: "35%", // Slightly past
+                avatar: "😋", // Satisfied face
+                food: "🍽️", // Empty plate
+                action: "result_now", // Arrow to Now
+                bubble: "Full! (No more food)"
+            },
+
+            // --- FUTURE ---
+            'future_simple': {
+                en: "Mary will eat a burger tomorrow.",
+                zh: "瑪莉明天將會吃漢堡。(計畫)",
+                tip: "Will + V。",
+                pos: "75%",
+                avatar: "👧",
+                food: "💭", // Thinking
+                action: "idle",
+                bubble: "Can't wait!"
+            },
+            'future_cont': {
+                en: "Mary will be eating at 12 PM tomorrow.",
+                zh: "明天中午12點，瑪莉應該「正在」吃漢堡。",
+                tip: "Will be + V-ing。想像明天的那個畫面，她在動。",
+                pos: "75%",
+                avatar: "👧",
+                food: "🍔",
+                action: "eating_loop",
+                bubble: "See you then!"
+            }
+        };
+
+        function setScenario(key) {
+            const data = scenarios[key];
+
+            // 1. Text Update
+            txtEn.innerText = data.en;
+            txtZh.innerText = data.zh;
+            txtTip.innerText = "💡 " + data.tip;
+
+            // 2. Reset Animation States
+            mary.classList.remove('chewing');
+            arrow.style.width = '0px';
+            arrow.style.opacity = '0';
+            food.classList.remove('hidden');
+            food.innerText = data.food;
+            avatar.innerText = data.avatar;
+            bubble.innerText = data.bubble;
+            bubble.style.opacity = '1';
+
+            // 3. Move Mary
+            mary.style.left = data.pos;
+
+            // 4. Handle Specific Actions
+            if (data.action === 'eating_loop') {
+                // Continuous chewing
+                setTimeout(() => {
+                    mary.classList.add('chewing');
+                }, 800);
+            } else if (data.action === 'eat_once') {
+                // Simple eat animation
+                setTimeout(() => {
+                    mary.classList.add('chewing');
+                    setTimeout(() => mary.classList.remove('chewing'), 1000);
+                }, 800);
+            } else if (data.action === 'result_now') {
+                // Present Perfect Logic: Action in past -> Result in Now
+                food.innerText = "🍔"; // Starts with burger
+                avatar.innerText = "👧";
+                
+                setTimeout(() => {
+                    // 1. Eat quickly
+                    mary.classList.add('chewing');
+                }, 800);
+
+                setTimeout(() => {
+                    // 2. Transform to Empty Plate & Satisfied Face
+                    mary.classList.remove('chewing');
+                    food.innerText = "🍽️"; // Empty plate
+                    avatar.innerText = "😋"; // Full face
+                    
+                    // 3. Draw Arrow to NOW
+                    // Calculate distance to center (50%)
+                    // Current pos is 35%. 50 - 35 = 15% width needed approx.
+                    // But in pixels:
+                    const stageWidth = document.querySelector('.stage-bg').offsetWidth;
+                    const arrowLen = stageWidth * 0.15; // 15% length
+                    
+                    arrow.style.left = '35%';
+                    arrow.style.width = arrowLen + 'px';
+                    arrow.style.opacity = '1';
+                }, 2000);
+
+            } else if (data.action === 'result_past') {
+                // Past Perfect Logic
+                arrow.style.left = '15%';
+                // Point to Past (25%) from Far Past (15%)
+                const stageWidth = document.querySelector('.stage-bg').offsetWidth;
+                const arrowLen = stageWidth * 0.10; 
+                
+                setTimeout(() => {
+                    arrow.style.width = arrowLen + 'px';
+                    arrow.style.opacity = '1';
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
